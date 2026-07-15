@@ -1,5 +1,10 @@
 # PMQS — Prediction Market Quant Stack
 
+[![CI](https://github.com/jhunter11/pmqs/actions/workflows/ci.yml/badge.svg)](https://github.com/jhunter11/pmqs/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Dependencies](https://img.shields.io/badge/dependencies-zero-brightgreen)
+
 **Execution-aware backtesting, paper trading, and honest edge validation for Kalshi and other prediction markets.**
 
 Most prediction-market backtests are fiction. They fill at mid with no latency, ignore fees, resample correlated fills as if they were independent, and quietly peek at the future. Then the bot goes live and the "edge" evaporates into spread and fees.
@@ -78,12 +83,35 @@ Full methodology: [docs/validation-playbook.md](docs/validation-playbook.md).
 
 Rates and per-series multipliers change. `FeeSchedule` defaults to the widely published 7% taker curve with maker fees at 25% of taker, and everything is configurable (`series_taker_rates={"KXBTC": Decimal("0.10")}`). Always verify against the venue's current official fee schedule before trusting cost-sensitive results.
 
+## Learn the method
+
+The reasoning behind every design choice here is written up as a short field
+guide in [docs/posts/](docs/posts/) — why backtests lie, the exact fee math,
+orderbook semantics, closing-line value, sample-size floors, and a real
+post-mortem of a stale feed manufacturing a fake edge. Start with
+[Why your Kalshi bot's backtest is lying to you](docs/posts/01-why-your-backtest-is-lying.md).
+
+## PMQS Pro
+
+The free core is complete and MIT-licensed — it is not a demo. **PMQS Pro**
+is the paid layer for people going deeper:
+
+- **Adverse-execution stress kit** — re-run any backtest at +1c/+2c worse fills, fee bumps, latency multiples; an edge you'd fund must survive the whole grid
+- **Walk-forward protocol tools** — market-level folds, embargo, pooled out-of-sample gating
+- **WebSocket capture** with sequence-checked book-delta reconstruction
+- **Settlement reconciliation + capture audits** (the stale-feed detector)
+- **Strategy scaffold pack** — weather / crypto / sports wiring, correct plumbing, zero alpha
+- **The validation course** — 8 hands-on modules graded by a real pytest harness
+- **"Death of an edge" case studies** — three real strategies and the validation stage that killed each one
+
+Same rules as the core: no signals, no picks, no income claims.
+**Availability:** listing link coming with the first release — watch this repo.
+
 ## Roadmap
 
-- WebSocket capture with book-delta reconstruction
 - Multi-venue adapters (Polymarket order books)
 - Maker-fill modeling with explicit queue-position assumptions (documented as optimistic)
-- PMQS Pro: strategy scaffolds pack, deeper analytics, guided validation course
+- Builder-code execution examples (disclosed, removable) once developer terms are reviewed
 
 ## Disclaimers
 
