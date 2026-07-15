@@ -1,0 +1,20 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+
+# Never commit credentials or captured market data
+*.pem
+*.key
+*.env
+.env*
+data/
+captures/
+*.jsonl.gz
