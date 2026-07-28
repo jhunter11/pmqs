@@ -34,7 +34,17 @@ That's PMQS's built-in demo strategy failing its own gate — on purpose. If a t
 | `pmqs.capture` | Bring-your-own-key Kalshi REST capture to JSONL, plus a `--fixture` mode that proves the whole pipeline with zero network. |
 | `pmqs.fixtures` | Deterministic synthetic market generator for tests and CI. |
 
-## Quickstart (60 seconds, no API key)
+## Quickstart (60 seconds, no API key, nothing installed)
+
+```bash
+python3 explore.py
+```
+
+A numbered menu: the gate's four conditions, the demo failing them, the orderbook
+rejecting five kinds of malformed input, the enforced-latency source, and the field
+guide. It runs from a bare checkout — PMQS has no third-party dependencies.
+
+Or go straight at it:
 
 ```bash
 pip install -e .
