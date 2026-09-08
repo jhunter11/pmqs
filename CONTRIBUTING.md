@@ -1,21 +1,15 @@
 # Contributing
 
-PRs welcome. Ground rules, which are also the product's values:
+PMQS accepts changes to replay, accounting, capture, and research checks. Keep examples synthetic and reproducible. Example strategies should explain the mechanics without claiming an investment return.
 
-1. **No edge claims.** Strategies in this repo must be demonstrably naive and
-   documented as such. PRs adding "profitable" strategies will be closed.
-2. **No bundled venue data.** Fixtures must be synthetic and deterministic.
-3. **Conservative by default.** Any new fill/fee/latency behavior defaults to
-   the pessimistic setting; optimism must be opt-in and documented.
-4. **Tests or it didn't happen.** `python -m pytest -q` must pass; new
-   behavior needs new tests, including the failure path.
-5. **Zero-dependency core.** New runtime dependencies go behind optional
-   extras (like `[capture]`), never into the core.
+New fill, fee, or latency options need a documented default and tests for failure cases. Explain which assumptions make a simulation optimistic or conservative. Keep runtime dependencies outside the standard library behind optional extras.
 
-Run checks locally:
+Before opening a pull request, run:
 
 ```bash
-pip install -e ".[dev]"
+python -m pip install -e ".[dev]"
 python -m pytest -q
 python -m ruff check src tests
 ```
+
+Include the input fixture, expected behavior, and command results. Do not commit venue data, credentials, or personal records. A small deterministic fixture should reproduce the issue without network access.

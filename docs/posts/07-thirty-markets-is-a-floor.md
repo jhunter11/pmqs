@@ -1,72 +1,19 @@
-# Thirty Settled Markets Is a Floor: Sample Size for Event-Contract Strategies
+# Sample size and dependence
 
-"My bot is up 40% this month" is the most common sentence in prediction-market
-Discord servers, and it is almost always statistically meaningless. Not wrong,
-necessarily — meaningless, in the precise sense that the same result is
-comfortably consistent with a losing strategy on a lucky run.
+PMQS defaults to a minimum of 30 settled markets for its evidence gate. This is a configurable screening rule. It is not a statistical guarantee, and passing it does not establish that a sample can detect the effect being studied.
 
-## The unit of evidence is the settled market
+The implementation can calculate its bootstrap interval with at least two market results. A sample below the configured floor still fails the gate even when those other calculations are available.
 
-Start here, because it changes every count that follows: **fills are not
-observations.** Every fill in one market resolves with that market's single
-settlement. Buy YES five times in a market that settles NO and you have one
-piece of evidence, sized into five pieces. Count fills as independent and
-your effective sample inflates by the average fills-per-market — and your
-confidence interval shrinks by its square root, purely as an artifact.
+## Choose the sampling unit
 
-So: not "400 trades." Ask "how many settled markets?"
+Fills in the same market share a settlement outcome and may share the same signal. Treating each fill as an independent experiment can understate uncertainty. PMQS aggregates PnL by settled market and resamples those market results.
 
-## What small samples can and can't say
+Market-level resampling still assumes that the sampled units adequately represent the target population. Contracts tied to one event, overlapping horizons, and repeated observations during one regime can violate that assumption. Group or block related observations when the research design requires it; the current gate does not choose those groups automatically.
 
-The per-market PnL of a typical event-contract strategy has a standard
-deviation on the order of the stake — outcomes are near-binary. A rough 95%
-CI on mean per-market PnL is `±2σ/√n`:
+## Plan around a useful effect
 
-| Settled markets | CI half-width (in units of per-market σ) |
-|---|---|
-| 10 | ±0.63σ |
-| 30 | ±0.37σ |
-| 100 | ±0.20σ |
-| 300 | ±0.12σ |
+Before collecting an evaluation sample, define the smallest effect that would justify further work. Estimate variability from separate development data and account for clustering and repeated comparisons. Use those assumptions to plan sample size or a stopping rule.
 
-If your true edge is 0.1σ per market — a *good* edge in this business — you
-need on the order of **hundreds** of settled markets before the CI reliably
-excludes zero. At 10 markets, a true-zero strategy shows a "40% month" about
-as often as a real one does.
+There is no universal market count that makes an edge reliable. More data can narrow sampling uncertainty while preserving a biased capture, an optimistic fill model, or selection on the same outcomes.
 
-This is exactly the shape of a real verdict from our own research: an MLB
-strategy with positive mean EV whose 95% CI on EV-per-contract came out at
-**(−0.045, +0.180)**. Positive mean, zero inside the interval. The honest
-reading — "consistent with an edge, equally consistent with nothing" — held
-it at paper stage. The exciting reading would have funded it.
-
-## Why 30 is a floor and not a target
-
-The [PMQS](https://github.com/jhunter11/pmqs) edge gate requires ≥30 settled
-markets before it will even *evaluate* the other conditions. Thirty is not
-where evidence becomes strong — it's roughly where a bootstrap CI stops being
-decorative. Below it, resampling 10 numbers ten thousand times mostly
-rearranges your luck.
-
-The gate's other conditions do the real work (CI lower bound above zero,
-positive CLV — see post #5), but they need a floor to stand on. Treat 30 as
-"minimum to be discussable" and 100+ as "minimum to be confident," and
-remember both counts reset whenever you change the strategy — evidence
-gathered under the old parameters belongs to the old strategy. Test twenty
-variants against the same 30 markets and keep the best, and you've just
-moved the overfitting one level up; the count that matters is per *decision*,
-not per backtest run.
-
-## The practical playbook
-
-1. Capture continuously, starting now — settled markets accrue in calendar
-   time and you cannot backfill what you didn't record (venue data terms
-   restrict redistribution, so vendor archives won't save you either).
-2. Prefer strategy families that touch many independent markets (40 weather
-   stations settle daily) over ones that touch three per week.
-3. Cluster everything by market. Per-fill statistics are how you lie to
-   yourself politely.
-4. Pre-register your floor and refuse to peek early. The gate exists so this
-   isn't a matter of discipline: `pmqs.validate.evaluate(min_settled=30)` is
-   the default, and FAIL is the default verdict until the evidence earns
-   otherwise.
+Keep the final evaluation period separate from strategy development. Report the number of markets, their relationships, the confidence method, and all strategy variants considered. The default bootstrap interval does not correct for an unreported search across many models.

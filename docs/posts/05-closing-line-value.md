@@ -1,75 +1,21 @@
-# Closing-Line Value: The Stat That Separates Luck from Information
+# Interpreting closing-line value
 
-Here is the most useful question in trading evaluation, and almost nobody
-asks it of their backtest:
+Closing-line value compares a fill price with a later reference midpoint. PMQS uses the last supplied snapshot with a defined midpoint for that market. The researcher must ensure that the supplied series covers the intended closing period.
 
-> Forget whether you won. Were your prices better than the market's final
-> ones?
+For a purchase, the calculation is reference midpoint minus fill VWAP. For a sale, the sign reverses. NO-side fills use the complementary midpoint, `100 - YES midpoint`. Positive values therefore indicate movement in the fill's direction, measured in cents per contract.
 
-## Why the close is the benchmark
+## What the reference can miss
 
-A prediction market's last price before settlement — the closing line — is
-the sharpest estimate anyone had of the outcome's probability. It aggregates
-every participant, including the ones smarter and faster than you, at the
-moment of maximum information.
+A last quote can be stale, thin, or far from settlement. Its midpoint may not support an executable trade. A market can also move for reasons unrelated to the strategy's signal.
 
-The outcome itself is just one draw from that probability. A 65% favorite
-loses 35% of the time; a portfolio of them loses often enough that your PnL
-over dozens of markets is mostly noise. But your fill price versus the close
-is not noise — it's a direct measurement of whether you were *early to
-information the market later agreed with*.
+The calculation excludes fees and does not measure realized profit. Positive closing-line value alone cannot establish an information advantage. Negative closing-line value identifies a pattern to investigate, without proving that every profitable settlement was luck.
 
-- Bought YES at 40c, market closed at 55c: **+15c of CLV.** Whatever the
-  outcome, you knew (or moved) first.
-- Bought YES at 60c, market closed at 55c: **−5c.** Even if you won, you
-  were the person the close-movers profited from.
+PMQS averages the available values by fill. It does not weight that mean by contract count or market. A market with many fills can therefore contribute more observations than another market. Review coverage and concentration alongside the mean.
 
-Positive CLV compounds across markets into exactly the thing PnL can't prove
-on small samples: repeatability.
+## Compare fixed horizons
 
-## The empirical teeth
+`markout()` uses the first usable snapshot at or after the fill time plus a chosen horizon. It returns no result when the supplied series has no usable later quote. The report should retain the requested horizon, actual quote delay, and missing-value count.
 
-This isn't theory to us. We trained a winner model for pro tennis on 62,768
-matches with two decades of features, evaluated walk-forward (train on past
-seasons, test on the next) against the de-vigged sharp closing line across
-37,572 odds-present matches. The model was worse than the closing line in
-**all nine test seasons** — pooled log-loss 0.59215 vs the line's 0.58843.
-Nine for nine. The line had already priced everything our features knew, and
-then some.
+Fixed horizons can distinguish an immediate execution problem from later price movement. They still depend on capture quality and do not prove causation. Evaluate several horizons chosen before inspecting the strategy's results.
 
-PnL evaluation would have needed years of betting volume to reveal this.
-CLV-style evaluation revealed it in one afternoon and killed the strategy
-before it cost anything. (The autopsy is written up in the PMQS Pro case-study
-pack; the short version is above.)
-
-## CLV on event contracts, concretely
-
-Sign conventions are where implementations quietly break. The frame is
-always: *positive = the close moved to the profitable side of your fill.*
-
-```
-buy  YES at v, close c (YES mid):  CLV = c − v
-sell YES at v:                     CLV = v − c
-NO-side fills: convert first (close_no = 100 − c), same buy/sell logic
-```
-
-Then average across fills and demand the mean be positive before you believe
-anything. In [PMQS](https://github.com/jhunter11/pmqs), that's not optional:
-mean CLV > 0 is one of the four conditions of the edge gate, computed on
-every backtest from the last observable mid before each settlement
-([pmqs/markout.py](../../src/pmqs/markout.py)).
-
-## The caveats that keep it honest
-
-- **CLV needs a fair close.** In thin markets the last quote can be a stale
-  1-lot. PMQS uses the last snapshot with a *defined* mid; if your capture is
-  sparse near settlement, treat CLV with suspicion (and fix the capture).
-- **Positive CLV with negative PnL happens** — usually meaning fees and
-  spread ate an edge that was real but too small. That's a cost problem, not
-  an information problem; they have different fixes.
-- **Negative CLV with positive PnL also happens** — that's the dangerous
-  quadrant, the signature of running hot on variance. It fails the gate, and
-  it should.
-
-One line to take away: **the market's close is the exam; the settlement is
-the party afterwards.** Grade yourself on the exam.
+The evidence gate requires a positive mean closing-line value as one screening condition. Read it with results after fees, market-level uncertainty, and fresh evaluation data.

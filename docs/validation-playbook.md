@@ -1,63 +1,34 @@
-# The Edge-Evidence Playbook (free edition)
+# Research validation playbook
 
-How to know whether your prediction-market strategy is real, before it costs
-you money. This is the methodology PMQS's `validate.evaluate()` gate encodes.
+PMQS tests defined assumptions about a replay. Its evidence gate combines sample count, results after fees, a bootstrap interval, and closing-line value. Each check has limits that the researcher must assess for the data and strategy.
 
-## The uncomfortable premise
+## Check the replay inputs
 
-Almost every retail "profitable bot" claim dies under one of six questions:
+Verify the fee schedule for the period covered by the capture. The library's default rates are model settings; they do not establish a venue's current fees. Use executable bid or ask prices and keep spread costs separate from fees.
 
-1. **Did you pay fees?** The standard taker curve peaks at 1.75c per contract
-   at 50c. A strategy trading near the middle of the book pays the venue
-   relentlessly. PMQS charges conservative cent-ceiling fees per fill.
-2. **Did you cross the spread?** You do not trade at mid. If your backtest
-   fills at mid, every trade starts with a phantom half-spread profit.
-   PMQS fills are taker-only against displayed liquidity.
-3. **Did you wait for your own latency?** A signal computed on a book you can
-   no longer trade against is a story, not a fill. PMQS executes orders
-   against the book that exists *after* your configured latency.
-4. **Could you actually get that size?** Displayed size includes quotes that
-   cancel faster than you arrive. PMQS applies a size haircut (default: half).
-5. **Are your samples independent?** Twenty fills in one market are one bet,
-   not twenty. PMQS aggregates PnL per settled market and bootstraps over
-   markets.
-6. **Did you beat the close, or just the scoreboard?** Winning bets at prices
-   worse than the closing line is what luck looks like. Positive closing-line
-   value (CLV) is what information looks like.
+Set execution delay and a displayed-size haircut before evaluating a strategy. The replayer processes a pending order against a later snapshot once its delay has elapsed. That model does not reproduce cancellations, queue position, or every live execution condition.
 
-## The gate
+Check timestamp definitions, source age, event order, and settlement identifiers. A correctly ordered stream can still contain stale values. Strategy code can also read external information that the replay engine does not control.
 
-A strategy is a **candidate** edge only when all four hold simultaneously:
+## Read the gate
 
-| Requirement | Why |
-|---|---|
-| ≥ 30 settled markets | Below this, confidence intervals are decorative. |
-| Post-fee PnL > 0 | Obvious, and still routinely faked via fee omission. |
-| Bootstrap 95% CI lower bound > 0 (per-market means) | A positive average that could plausibly be zero is not evidence. |
-| Mean CLV > 0 | You were early to information, not lucky at settlement. |
+The default configuration requires all four conditions:
 
-FAIL is the default and the normal outcome. Most strategies, honestly
-measured, lose to fees and spread — knowing that *before* deploying capital
-is the entire value of a backtest.
+| Check | Scope |
+| --- | --- |
+| At least 30 settled markets | A configurable screening floor, without a power guarantee |
+| Positive total PnL after fees | Accounting over the included markets |
+| Positive lower bootstrap confidence bound | Resampled mean PnL per market |
+| Positive mean closing-line value | Fill prices compared with the last usable supplied midpoints |
 
-## What passing the gate does NOT mean
+The bootstrap uses markets as its sampling unit. Shared events, overlapping contracts, and time trends can still make those units dependent. The implementation does not correct for repeated strategy selection or searching many parameter settings.
 
-- It does not mean the edge persists out of sample.
-- It does not survive regime change, venue rule changes, or fee changes.
-- It does not size your positions (that is a separate risk problem).
-- It is a *promotion to paper trading*, not to capital.
+Closing-line value excludes fees and depends on the quality of the reference quotes. A positive value can support further investigation, but it cannot prove an information advantage or future profit.
 
-## Recommended workflow
+## Preserve a separate evaluation set
 
-1. Capture your own data (`pmqs.capture`), continuously, before you need it.
-2. Prove your pipeline on the synthetic fixture (`--fixture`) — zero network.
-3. Replay your strategy with honest latency and haircut settings.
-4. Read the gate's reasons. Fix the *measurement* before touching the model.
-5. Only after a PASS: paper trade live, and require the paper results to pass
-   the same gate again on fresh markets.
+Run the synthetic fixture first to check installation and accounting. Record the strategy version, data hash, parameters, and execution assumptions for each later run.
 
-The paid PMQS Pro materials go deeper: leakage taxonomies, settlement-source
-reconciliation, stress-testing fills at +1c/+2c adverse execution, walk-forward
-protocol design, and worked examples of strategies dying honorably at each
-stage. The gate above, though, is complete and free — there is no secret
-stricter version. Rigor is not the upsell; depth is.
+Use development data to change the strategy, then evaluate the frozen version on later markets. Report failed variants and missing observations. If the strategy passes this screen, collect fresh paper results and check the same assumptions again. The gate provides no authorization to place live orders.
+
+The [method notes](posts/README.md) explain the individual checks and the included fixture result. Private companion materials are outside this release.

@@ -1,19 +1,9 @@
 # Security policy
 
-## Credentials
+The optional capture client signs read requests with a user-supplied key. Keep that key outside the repository and pass its path with `--private-key`. Review the requested endpoint and local output path before capture.
 
-PMQS never stores, transmits, or logs your API credentials beyond signing the
-requests you explicitly initiate. The `.gitignore` refuses `*.pem`, `*.key`,
-and `.env*` files by default. Keep your Kalshi private key outside the
-repository and pass its path via `--private-key`.
+The ignore file covers common key and environment-file extensions. It cannot protect secrets already tracked by Git, copied into other files, or printed by another program. Review changes before committing them.
 
-## Live trading surface
+PMQS has no live order-placement module. Any execution service built around it needs its own authorization, limits, and security review.
 
-There is none. PMQS contains no order-placement code. If you build execution
-on top of it, that code and its risks are yours.
-
-## Reporting a vulnerability
-
-Open a GitHub issue with the label `security` (for sensitive reports, note in
-the issue that you need a private channel and a maintainer will provide one).
-Please include reproduction steps.
+For a public bug report, include a sanitized reproduction and the affected version. Omit keys, account details, personal data, and exploit details that would expose another system. Arrange a private channel with the maintainer before sharing sensitive material.
